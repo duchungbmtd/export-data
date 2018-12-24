@@ -1,0 +1,63 @@
+body {
+    background-color: #e9ebee;
+}
+
+.card {
+    margin-top: 1em;
+}
+.card .card-title{
+    text-align: center;
+}
+/* IMG displaying */
+.person-card {
+    margin-top: 5em;
+    padding-top: 5em;
+}
+.person-card .card-title{
+    text-align: center;
+}
+.person-card .person-img{
+    width: 10em;
+    position: absolute;
+    top: -5em;
+    left: 50%;
+    margin-left: -5em;
+    border-radius: 100%;
+    overflow: hidden;
+    background-color: white;
+}
+
+form div.row .card{
+    height: 260px;
+}
+
+.error_message{
+    color: #721c24;
+}
+.error_message{
+    color: #721c24;
+}
+
+.container .view_import_file{
+    background: white;
+    margin-top: 50px;
+    padding: 20px;
+    border: 2px solid white;
+    border-radius: 20px;
+}
+.container .view_import_file > h2{
+    padding: 10px;
+}
+.import_content, .export_content{
+    background: white;
+    border: 1px solid white;
+    border-radius: 10px;
+    margin-top: 20px;
+    padding: 50px;
+}
+.feedback{
+    margin-top: 5px;
+}
+.import_content .form-group button, .export_content .form-group button{
+    margin-top: 5px;
+}
