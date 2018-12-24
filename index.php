@@ -43,7 +43,7 @@
                         <input id="username" name="username" type="text" class="form-control" placeholder="User: pwater" >
                         <div id="username_feedback" class="invalid-feedback"></div>
                     </div><div class="form-group col-md-3">
-                        <input id="password" name="password" type="text" class="form-control" placeholder="Pass: pwater" >
+                        <input id="password" name="password" type="password" class="form-control" placeholder="Pass: pwater" >
                         <div id="password_feedback" class="invalid-feedback"></div>
                     </div><div class="form-group col-md-3">
                         <input id="database" name="database" type="text" class="form-control" placeholder="Database: pwater" >
