@@ -28,6 +28,7 @@ if (isset($_POST['type_of_db']) && $_POST['type_of_db'] == 'manual'){
 }
 if (!empty($server_info)){
     $connect = mysqli_connect($server_info['hostname'], $server_info['username'], $server_info['password'], $server_info['database']);
+    mysqli_set_charset($connect,"utf8");
     if ($connect){
         $GLOBALS['connect'] = $connect;
         if (isset($_POST['btn_export_data_csv'])){
@@ -174,7 +175,6 @@ function export_data_csv($config, $id_list = array(), $customer_id = ''){
             while ($row = mysqli_fetch_assoc($result)){
                 foreach ($row as &$item_row){
                     $item_row = data_new_line_to_string($item_row);
-                    $item_row = mb_convert_encoding($item_row, 'SJIS');
                 }
                 $check_data = true;
                 $data .= '"';
@@ -268,7 +268,6 @@ function insert_and_map_id($table, $field = array(), $data = array(), &$map_id, 
             unset($item['id']);
             $value = "'";
             $value .=  implode("', '", $item);
-            $value = mb_convert_encoding($value, 'UTF-8', 'SJIS');
             $value .= "'";
             $sql = $insert .'(' . $value . ')';
             $result = mysqli_query($GLOBALS['connect'], $sql);

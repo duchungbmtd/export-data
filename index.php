@@ -136,7 +136,7 @@
                 foreach ($value_dataView['data'] as $value_data){
                     echo '<tr>';
                     foreach ($value_data as $value_data_item){
-                        echo '<th scope="col">'. mb_convert_encoding($value_data_item, 'UTF-8', "SJIS") .'</th>';
+                        echo '<th scope="col">' . $value_data_item . '</th>';
                     }
                     echo '</tr>';
                 }
