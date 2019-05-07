@@ -125,7 +125,7 @@
 <!--Start Container view import data csv-->
 <?php
 if (!empty($viewResult)){
-    echo '<div class="container view_import_file">';
+    echo '<div class=" view_import_file">';
     echo '<div class="row" style="background-color: white; border: solid 1px black;">';
 //Start nav-tab
     echo '<div class="col-md-2 mb-3" style="padding: 0px!important; border-right: solid 1px black;">';

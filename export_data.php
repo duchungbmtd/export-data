@@ -14,7 +14,7 @@ $result = array(
     'code' => '',
     'message' => ''
 );
-
+cleanFolderUpload();
 $server_info = $config_database['default'];
 $type_of_db = '';
 if (isset($_POST['type_of_db']) && $_POST['type_of_db'] == 'manual'){
@@ -50,11 +50,13 @@ if (!empty($server_info)){
                     if (!$export_result = export_data_csv($config_export_data_csv, $id_list, $customer_id)){
                         $result = set_message('customer_id_not_found', 'Customer ID "' . $customer_id . '" not exist');
                         $flag_error = true;
-                        break;
-                    }else{
                         fclose($fp);
+                        deleteDir("storage/download/". $foldername);
+                        break;
                     }
+                    fclose($fp);
                 }
+
 
                 if (!$flag_error) {
                     $zip = new ZipArchive();
@@ -87,8 +89,9 @@ if (!empty($server_info)){
                     $zip = new ZipArchive;
                     $res = $zip->open($filename);
                     if ($res === TRUE) {
-                        $current_date = date('YmdHis');
-                        $folder_upload = "storage/upload/temp_". $current_date . "/";
+                        $current_date = date('Ymd');
+                        $current_datetime = date('YmdHis');
+                        $folder_upload = "storage/upload/". $current_date ."/temp_". $current_datetime . "/";
                         if (!file_exists($folder_upload)) {
                             mkdir($folder_upload, 0777, true);
                         }
@@ -413,12 +416,22 @@ function deleteDir($dirPath) {
     $files = glob($dirPath . '*', GLOB_MARK);
     foreach ($files as $file) {
         if (is_dir($file)) {
-            self::deleteDir($file);
+            deleteDir($file);
         } else {
             unlink($file);
         }
     }
     rmdir($dirPath);
 }
+function cleanFolderUpload(){
+    $current_date = date('Ymd');
+    if ($file_list = opendir("storage/upload/" )) {
+        while (($file = readdir($file_list)) !== false) {
+            if(!in_array($file, array(".", "..", $current_date)) && is_dir("storage/upload/". $file)){
+                deleteDir("storage/upload/". $file);
+            }
+        }
+    }
 
+}
 ?>
