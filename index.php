@@ -128,7 +128,7 @@ if (!empty($viewResult)){
     echo '<div class=" view_import_file">';
     echo '<div class="row" style="background-color: white; border: solid 1px black;">';
 //Start nav-tab
-    echo '<div class="col-md-2 mb-3" style="padding: 0px!important; border-right: solid 1px black;">';
+    echo '<div class="col-md-1 mb-3" style="padding: 0px!important; border-right: solid 1px black;">';
     echo '<ul class="nav nav-pills flex-column" id="myTab" role="tablist">';
     echo '<li class="nav-item text-center" style="padding: 20px"><strong>Contract ID</strong></li>';
     $first_header = true;
@@ -145,7 +145,7 @@ if (!empty($viewResult)){
 //End nav-tab
 
 //Start nav-content
-    echo '<div class="col-md-10">';
+    echo '<div class="col-md-11">';
     echo '<div class="tab-content" id="myTabContent">';
     $first = true;
     foreach ($viewResult as $key_viewResult => $value_viewResult){
