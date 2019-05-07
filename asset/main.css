@@ -38,14 +38,15 @@ form div.row .card{
     color: #721c24;
 }
 
-.container .view_import_file{
-    background: white;
+.view_import_file{
     margin-top: 50px;
-    padding: 20px;
+}
+#myTabContent{
+    background: white;
     border: 2px solid white;
     border-radius: 20px;
 }
-.container .view_import_file > h2{
+.container #myTabContent > h2{
     padding: 10px;
 }
 .import_content, .export_content{
@@ -60,4 +61,8 @@ form div.row .card{
 }
 .import_content .form-group button, .export_content .form-group button{
     margin-top: 5px;
+}
+
+#myTab > li{
+    border-bottom: solid 1px #29293c;
 }

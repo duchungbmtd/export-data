@@ -33,22 +33,39 @@ if (!empty($server_info)){
         $GLOBALS['connect'] = $connect;
         if (isset($_POST['btn_export_data_csv'])){
             if (!empty($_POST['customer_id'])){
-                $customer_id = $_POST['customer_id'];
-                $current_date = date('YmdHis');
-                $fpath = "storage/".$customer_id . "_" . $current_date . '_data.csv';
-                $fp = fopen($fpath, 'w+');
-
+                $foldername = date('YmdHis');
                 $config_export_data_csv = $config_table['export_data_csv'];
+                if (!file_exists("storage/download/". $foldername)) {
+                    mkdir("storage/download/". $foldername, 0777, true);
+                }
                 $id_list = array();
-                if (!$export_result = export_data_csv($config_export_data_csv, $id_list, $customer_id)){
-                    $result = set_message('customer_id_not_found', 'Customer ID not exist');
-                }else{
-                    fclose($fp);
-                    header('Content-Type: application/csv');
-                    header('Content-Disposition: attachment; filename='.$customer_id . "_" . $current_date . '_data.csv');
-                    header('Pragma: no-cache');
-                    readfile($fpath);
-                    exit();
+                $flag_error = false;
+                $customer_list = explode(',', $_POST['customer_id']);
+                foreach ($customer_list as $customer_id){
+                    $customer_id = trim($customer_id);
+                    $current_date = date('YmdHis');
+                    $fpath = "storage/download/". $foldername . "/" . $customer_id . "_" . $current_date . '_data.csv';
+                    $fp = fopen($fpath, 'w+');
+
+                    if (!$export_result = export_data_csv($config_export_data_csv, $id_list, $customer_id)){
+                        $result = set_message('customer_id_not_found', 'Customer ID "' . $customer_id . '" not exist');
+                        $flag_error = true;
+                        break;
+                    }else{
+                        fclose($fp);
+                    }
+                }
+
+                if (!$flag_error) {
+                    $zip = new ZipArchive();
+                    create_zip_file_to_download("storage/download/". $foldername, "storage/download/". $foldername . '.zip');
+                    header("Content-type: application/zip");
+                    header("Content-Disposition: attachment; filename=" .$foldername . ".zip");
+                    header("Pragma: no-cache");
+                    header("Expires: 0");
+                    readfile("storage/download/". $foldername . ".zip");
+                    deleteDir("storage/download/". $foldername);
+                    exit;
                 }
             }else{
                 $result = set_message('customer_id_error', 'Input Customer ID please!!!');
@@ -63,66 +80,100 @@ if (!empty($server_info)){
                 $config_export_data_csv = $config_table['export_data_csv'];
 
                 $filename = $_FILES['csv_import']['tmp_name'];
-                $handle = fopen($filename, "rb");
-                $contents = fread($handle, filesize($filename));
-                $array_content = preg_split("/((\r?\n)|(\r\n?))/", $contents);
-                foreach($array_content as $line){
-                    if (substr($line, 0, 13) == START_TABLE){
-                        $table = substr($line, 13);
-                        $data[$table] = array();
-                        $map_id_list[$table] = array();
-                        $field_list[$table] = array();
-                    }else if (substr($line, 0, 11) == END_TABLE || $line == ''){
-                        continue;
-                    }else{
-                        $line = substr($line, 1,  -1);
-                        $items = explode('","', $line);
-                        $count_item = count($items);
-                        if (substr($items[0], 0) == 'id'){
-                            foreach ($items as $item){
-                                array_push($field_list[$table], $item);
-                            }
-                        }else{
-                            for ($i = 0; $i < $count_item; $i++){
-                                //convert string to import and show table html
-                                if (isset($_POST['btn_import_data_csv'])){
-                                    $items[$i] = data_string_to_new_line($items[$i]);
-                                }else{
-                                    $items[$i] = data_string_to_new_line($items[$i], true);
+                $accepted_types = array('application/zip', 'application/x-zip-compressed', 'multipart/x-zip', 'application/s-compressed');
+                if(!in_array($_FILES['csv_import']['type'], $accepted_types)){
+                    $result = set_message('type error', 'Sai format file');
+                }else{
+                    $zip = new ZipArchive;
+                    $res = $zip->open($filename);
+                    if ($res === TRUE) {
+                        $current_date = date('YmdHis');
+                        $folder_upload = "storage/upload/temp_". $current_date . "/";
+                        if (!file_exists($folder_upload)) {
+                            mkdir($folder_upload, 0777, true);
+                        }
+                        $zip->extractTo($folder_upload);
+                        $zip->close();
+
+                        if ($file_list = opendir($folder_upload)) {
+                            $viewResult = array();
+                            while (($file = readdir($file_list)) !== false) {
+                                $pathinfo = pathinfo($file);
+                                if ($file != "." && $file != ".." && $pathinfo['extension'] == 'csv') {
+                                    $filename = $folder_upload . $file;
+                                    $handle = fopen($filename, "rb");
+                                    $contents = fread($handle, filesize($filename));
+                                    $array_content = preg_split("/((\r?\n)|(\r\n?))/", $contents);
+                                    foreach($array_content as $line){
+                                        if (substr($line, 0, 13) == START_TABLE){
+                                            $table = substr($line, 13);
+                                            $data[$table] = array();
+                                            $map_id_list[$table] = array();
+                                            $field_list[$table] = array();
+                                        }else if (substr($line, 0, 11) == END_TABLE || $line == ''){
+                                            continue;
+                                        }else{
+                                            $line = substr($line, 1,  -1);
+                                            $items = explode('","', $line);
+                                            $count_item = count($items);
+                                            if (substr($items[0], 0) == 'id'){
+                                                foreach ($items as $item){
+                                                    array_push($field_list[$table], $item);
+                                                }
+                                            }else{
+                                                for ($i = 0; $i < $count_item; $i++){
+                                                    //convert string to import and show table html
+                                                    if (isset($_POST['btn_import_data_csv'])){
+                                                        $items[$i] = data_string_to_new_line($items[$i]);
+                                                    }else{
+                                                        $items[$i] = data_string_to_new_line($items[$i], true);
+                                                    }
+                                                    $data_item += array(
+                                                        $field_list[$table][$i] => $items[$i]
+                                                    );
+                                                }
+                                                array_push($data[$table], $data_item);
+                                                $map_id_list[$table] += array(
+                                                    $data_item['id'] => ''
+                                                );
+                                                $data_item = array();
+                                            }
+                                        }
+                                    }
+                                    if (isset($_POST['btn_import_data_csv'])){
+                                        try{
+                                            mysqli_query($GLOBALS['connect'], "START TRANSACTION");
+                                            if ($result =  import_data_csv($config_export_data_csv, $field_list, $data, $map_id_list)){
+                                                $result = set_message('import_success', "Import file success");
+                                            }else{
+                                                throw new Exception("ERROR IMPORT DATABASE");
+                                            }
+                                            mysqli_query($GLOBALS['connect'], "COMMIT");
+                                        }catch (Exception $e){
+                                            $result = set_message('import_error', "Error while importing data with file: ". $pathinfo['basename'] ."!");
+                                            mysqli_query($GLOBALS['connect'], "ROLLBACK");
+                                            break;
+                                        }
+                                        fclose($handle);
+                                    }elseif (isset($_POST['btn_view_data_csv'])){
+                                        $name = $pathinfo['filename'];
+                                        $contract_id = explode("_", $name)[0];
+                                        $dataView = array();
+                                        foreach ($field_list as $key_field_list => $value_field_list){
+                                            $dataView[$key_field_list] = array(
+                                                'field'     => $value_field_list,
+                                                'data'     => $data[$key_field_list],
+                                            );
+                                        }
+                                        $viewResult[$contract_id] = $dataView;
+                                    }
+
                                 }
-                                $data_item += array(
-                                    $field_list[$table][$i] => $items[$i]
-                                );
                             }
-                            array_push($data[$table], $data_item);
-                            $map_id_list[$table] += array(
-                                $data_item['id'] => ''
-                            );
-                            $data_item = array();
+                            closedir($file_list);
                         }
-                    }
-                }
-                if (isset($_POST['btn_import_data_csv'])){
-                    try{
-                        mysqli_query($GLOBALS['connect'], "START TRANSACTION");
-                        if ($result =  import_data_csv($config_export_data_csv, $field_list, $data, $map_id_list)){
-                            $result = set_message('import_success', "Import file success");
-                        }else{
-                            throw new Exception("ERROR IMPORT DATABASE");
-                        }
-                        mysqli_query($GLOBALS['connect'], "COMMIT");
-                    }catch (Exception $e){
-                        $result = set_message('import_error', "Error while importing data!");
-                        mysqli_query($GLOBALS['connect'], "ROLLBACK");
-                    }
-                    fclose($handle);
-                }elseif (isset($_POST['btn_view_data_csv'])){
-                    $dataView = array();
-                    foreach ($field_list as $key_field_list => $value_field_list){
-                        $dataView[$key_field_list] = array(
-                            'field'     => $value_field_list,
-                            'data'     => $data[$key_field_list],
-                        );
+                    } else {
+                        echo 'failed, code:' . $res;
                     }
                 }
             }else{
@@ -319,4 +370,55 @@ function data_string_to_new_line($string, $is_html = false){
     }
     return $string;
 }
+
+function create_zip_file_to_download($file_path = '', $file_name = 'test'){
+    $rootPath  = realpath($file_path);
+
+// Initialize archive object
+    $zip = new ZipArchive();
+    $zip->open($file_name, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+// Create recursive directory iterator
+    /** @var SplFileInfo[] $files */
+    $files = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($rootPath),
+        RecursiveIteratorIterator::LEAVES_ONLY
+    );
+
+    foreach ($files as $name => $file)
+    {
+        // Skip directories (they would be added automatically)
+        if (!$file->isDir())
+        {
+            // Get real and relative path for current file
+            $filePath = $file->getRealPath();
+            $relativePath = substr($filePath, strlen($rootPath) + 1);
+
+            // Add current file to archive
+            $zip->addFile($filePath, $relativePath);
+        }
+    }
+
+// Zip archive will be created only after closing object
+    $zip->close();
+}
+
+function deleteDir($dirPath) {
+    if (! is_dir($dirPath)) {
+        throw new InvalidArgumentException("$dirPath must be a directory");
+    }
+    if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') {
+        $dirPath .= '/';
+    }
+    $files = glob($dirPath . '*', GLOB_MARK);
+    foreach ($files as $file) {
+        if (is_dir($file)) {
+            self::deleteDir($file);
+        } else {
+            unlink($file);
+        }
+    }
+    rmdir($dirPath);
+}
+
 ?>
