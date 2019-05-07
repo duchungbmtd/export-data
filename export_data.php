@@ -100,9 +100,11 @@ if (!empty($server_info)){
 
                         if ($file_list = opendir($folder_upload)) {
                             $viewResult = array();
+                            $have_file = false;
                             while (($file = readdir($file_list)) !== false) {
                                 $pathinfo = pathinfo($file);
                                 if ($file != "." && $file != ".." && $pathinfo['extension'] == 'csv') {
+                                    $have_file = true;
                                     $filename = $folder_upload . $file;
                                     $handle = fopen($filename, "rb");
                                     $contents = fread($handle, filesize($filename));
@@ -152,9 +154,11 @@ if (!empty($server_info)){
                                                 throw new Exception("ERROR IMPORT DATABASE");
                                             }
                                             mysqli_query($GLOBALS['connect'], "COMMIT");
+                                            write_log( __FILE__ . " - " . __LINE__ . " - " . " Import Success!");
                                         }catch (Exception $e){
                                             $result = set_message('import_error', "Error while importing data with file: ". $pathinfo['basename'] ."!");
                                             mysqli_query($GLOBALS['connect'], "ROLLBACK");
+                                            write_log( __FILE__ . " - " . __LINE__ . " - " . " Import Failed!");
                                             break;
                                         }
                                         fclose($handle);
@@ -169,22 +173,31 @@ if (!empty($server_info)){
                                             );
                                         }
                                         $viewResult[$contract_id] = $dataView;
+                                        write_log( __FILE__ . " - " . __LINE__ . " - " . " View Content CSV!");
                                     }
 
                                 }
                             }
                             closedir($file_list);
+                            if (!$have_file){
+                                write_log( __FILE__ . " - " . __LINE__ . " - " . "File Empty");
+                            }
                         }
                     } else {
-                        echo 'failed, code:' . $res;
+                        $result = set_message('file_error', 'Cannot open File Import!');
+                        write_log( __FILE__ . " - " . __LINE__ . " - " . " Cannot open File Import!");
                     }
                 }
             }else{
                 $result = set_message('file_error', 'Cannot find File Import!');
+                write_log( __FILE__ . " - " . __LINE__ . " - " . " Cannot find File Import!");
             }
+        }else{
+            write_log( __FILE__ . " - " . __LINE__ . " - " . " Action not setting");
         }
     }else{
         $result = set_message('server_error', 'Cannot connect to server '. $server_info['hostname']);
+        write_log( __FILE__ . " - " . __LINE__ . " - " . " Cannot connect to server");
     }
 }
 
@@ -256,6 +269,7 @@ function export_data_csv($config, $id_list = array(), $customer_id = ''){
             fwrite($fp, $data);
         }
         set_footer($key);
+        write_log( __FILE__ . " - " . __LINE__ . " - " . " Create data for table: ". $key);
         if (!empty($value['table_related'])){
             export_data_csv($value['table_related'], $id_list);
         }
@@ -433,5 +447,17 @@ function cleanFolderUpload(){
         }
     }
 
+}
+function write_log($content){
+    $current_date = date("Ydm");
+    if (!file_exists("storage/download/". $current_date)) {
+        mkdir("logs/". $current_date, 0777, true);
+    }
+
+    $fpath = "logs/". $current_date. "/log.txt";
+    $fp = fopen($fpath, 'a+');
+    $content = date("Y-m-d H:i:s"). " - " . $content . "\r\n";
+    fwrite($fp, $content);
+    fclose($fp);
 }
 ?>
