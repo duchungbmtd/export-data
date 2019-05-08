@@ -36,7 +36,8 @@ if (!empty($server_info)){
                 $foldername = date('YmdHis');
                 $config_export_data_csv = $config_table['export_data_csv'];
                 if (!file_exists("storage/download/". $foldername)) {
-                    mkdir("storage/download/". $foldername, 0777, true);
+                    @mkdir("storage/download/". $foldername, 0777, true);
+                    @chmod("storage/download/". $foldername, 0777);
                 }
                 $id_list = array();
                 $flag_error = false;
@@ -93,7 +94,8 @@ if (!empty($server_info)){
                         $current_datetime = date('YmdHis');
                         $folder_upload = "storage/upload/". $current_date ."/temp_". $current_datetime . "/";
                         if (!file_exists($folder_upload)) {
-                            mkdir($folder_upload, 0777, true);
+                            @mkdir($folder_upload, 0777, true);
+                            @chmod($folder_upload, 0777);
                         }
                         $zip->extractTo($folder_upload);
                         $zip->close();
@@ -450,8 +452,9 @@ function cleanFolderUpload(){
 }
 function write_log($content){
     $current_date = date("Ydm");
-    if (!file_exists("storage/download/". $current_date)) {
-        mkdir("logs/". $current_date, 0777, true);
+    if (!file_exists("logs/". $current_date)) {
+        @mkdir("logs/". $current_date, 0777, true);
+        @chmod("logs/". $current_date, 0777);
     }
 
     $fpath = "logs/". $current_date. "/log.txt";
