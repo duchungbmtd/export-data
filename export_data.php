@@ -166,7 +166,7 @@ if (!empty($server_info)){
                                         fclose($handle);
                                     }elseif (isset($_POST['btn_view_data_csv'])){
                                         $name = $pathinfo['filename'];
-                                        $contract_id = explode("_", $name)[0];
+                                        $contract_id = explode("_", $name);
                                         $dataView = array();
                                         foreach ($field_list as $key_field_list => $value_field_list){
                                             $dataView[$key_field_list] = array(
@@ -174,7 +174,7 @@ if (!empty($server_info)){
                                                 'data'     => $data[$key_field_list],
                                             );
                                         }
-                                        $viewResult[$contract_id] = $dataView;
+                                        $viewResult[$contract_id[0]] = $dataView;
                                         write_log( __FILE__ . " - " . __LINE__ . " - " . " View Content CSV!");
                                     }
 
